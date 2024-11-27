@@ -13,56 +13,54 @@ namespace MorangosDaCidade.Repository
     class FuncionarioRepository
     {
         string stringDeConexao = @"Data Source=LAPTOP-V1LI7TEI;Initial Catalog=MorangosDaCidade;Integrated Security=True";
-            public int CadastrarFuncionario(Funcionario f)
+        public async Task<int> CadastrarFuncionarioAsync(Funcionario f)
+        {
+            int resultado = 0;
+
+            string consulta = "INSERT INTO dbo.FUNCIONARIO (NOME, CPF, TELEFONE, EMAIL, DataNascimento, SENHA)" +
+                              " VALUES (@NOME, @CPF, @TELEFONE, @EMAIL, @DataNascimento, @SENHA)";
+
+            using (SqlConnection conexao = new SqlConnection(stringDeConexao))
             {
-                int resultado = 0;
+                SqlCommand comando = new SqlCommand(consulta, conexao);
+                comando.Parameters.AddWithValue("@NOME", f.Nome);
+                comando.Parameters.AddWithValue("@CPF", f.Cpf.Replace(".", "").Replace("-", "").Replace(",", ""));
+                comando.Parameters.AddWithValue("@TELEFONE", f.Telefone.Replace("(", "").Replace(")", "").Replace("-", "").Replace(" ", ""));
+                comando.Parameters.AddWithValue("@EMAIL", f.Email);
+                comando.Parameters.AddWithValue("@DataNascimento", f.DataNascimento);
+                comando.Parameters.AddWithValue("@SENHA", f.Senha);
 
-                string consulta = "INSERT INTO dbo.FUNCIONARIO (NOME,CPF,TELEFONE," +
-                    "EMAIL,DataNascimento,SENHA)" + 
-                    " VALUES (@NOME, @CPF, @TELEFONE, @EMAIL, @DataNascimento, @SENHA)";
-
-                using (SqlConnection conexao = new SqlConnection(stringDeConexao))
+                try
                 {
-                    SqlCommand comando = new SqlCommand(consulta, conexao);
-                    comando.Parameters.AddWithValue("@NOME", f.Nome);
-                    comando.Parameters.AddWithValue("@CPF", f.Cpf);
-                    comando.Parameters.AddWithValue("@TELEFONE", f.Telefone);
-                    comando.Parameters.AddWithValue("@EMAIL", f.Email);
-                    comando.Parameters.AddWithValue("@DataNascimento", f.DataNascimento);
-                    comando.Parameters.AddWithValue("@SENHA", f.Senha);
-
-                    try
-                    {
-                        conexao.Open();
-
-                        resultado = comando.ExecuteNonQuery();
-                        Console.WriteLine("Número de linhas afetadas: " + resultado);
-                    }
-                    catch (SqlException ex) { Console.WriteLine("Erro de SQL: " + ex.Message); }
-
-                    catch (Exception ex) { Console.WriteLine("Erro: " + ex.Message);  }
-
-                    finally
-                    {
-                        // Garantindo que a conexão seja fechada
-                        conexao.Close();
-                    }
+                    await conexao.OpenAsync();
+                    resultado = await comando.ExecuteNonQueryAsync();
+                    Console.WriteLine("Número de linhas afetadas: " + resultado);
                 }
-                return resultado;
+                catch (SqlException ex)
+                {
+                    Console.WriteLine("Erro de SQL: " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Erro: " + ex.Message);
+                }
             }
+            return resultado;
+        }
 
-        public List<Funcionario> ListarFuncionarios()
+
+        public async Task<List<Funcionario>> ListarFuncionariosAsync()
         {
             using (SqlConnection connection = new SqlConnection(stringDeConexao))
             {
                 try
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
                     string query = "SELECT IdFunc, NOME, CPF, EMAIL, TELEFONE, DataNascimento FROM dbo.FUNCIONARIO";
                     SqlCommand comando = new SqlCommand(query, connection);
                     List<Funcionario> funcionarios = new List<Funcionario>();
-                    SqlDataReader reader = comando.ExecuteReader();
-                    while (reader.Read())
+                    SqlDataReader reader = await comando.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
                     {
                         Funcionario f = new Funcionario();
                         f.Id = (int)reader["IdFunc"];
@@ -126,31 +124,30 @@ namespace MorangosDaCidade.Repository
             return null;
         }
 
-        public Funcionario BuscarFuncionarioPorId(int id)
+        public async Task<Funcionario> BuscarFuncionarioPorIdAsync(int id)
         {
             using (SqlConnection connection = new SqlConnection(stringDeConexao))
             {
                 try
                 {
-                    connection.Open();
-                    string query = "SELECT IdFunc, NOME, CPF, EMAIL, TELEFONE, DataNascimento FROM dbo.FUNCIONARIO" +
-                        " WHERE IdFunc = @Id";
+                    await connection.OpenAsync();
+                    string query = "SELECT IdFunc, NOME, CPF, EMAIL, TELEFONE, DataNascimento FROM dbo.FUNCIONARIO WHERE IdFunc = @Id";
                     SqlCommand comando = new SqlCommand(query, connection);
                     comando.Parameters.AddWithValue("@Id", id);
-                    SqlDataReader reader = comando.ExecuteReader();
-                    if (reader.Read())
+                    SqlDataReader reader = await comando.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
                     {
-                        Funcionario f = new Funcionario();
-                        f.Id = (int)reader["IdFunc"];
-                        f.Nome = (string)reader["NOME"];
-                        f.Cpf = (string)reader["CPF"];
-                        f.Email = (string)reader["EMAIL"];
-                        f.Telefone = (string)reader["TELEFONE"];
-                        SqlDateTime dtNascimento = reader.GetDateTime(reader.GetOrdinal("DataNascimento"));
-                        connection.Close();
+                        Funcionario f = new Funcionario
+                        {
+                            Id = (int)reader["IdFunc"],
+                            Nome = (string)reader["NOME"],
+                            Cpf = (string)reader["CPF"],
+                            Email = (string)reader["EMAIL"],
+                            Telefone = (string)reader["TELEFONE"],
+                            DataNascimento = reader["DataNascimento"] != DBNull.Value ? new SqlDateTime((DateTime)reader["DataNascimento"]) : SqlDateTime.Null
+                        };
                         return f;
                     }
-
                 }
                 catch (SqlException ex)
                 {
@@ -160,44 +157,46 @@ namespace MorangosDaCidade.Repository
                 {
                     Console.WriteLine("Erro: " + ex.Message);
                 }
-                connection.Close();
             }
             return null;
         }
-        public int AtualizarFuncionario(Funcionario funcionario)
+
+        public async Task<int> AtualizarFuncionarioAsync(Funcionario funcionario)
         {
             Console.WriteLine(funcionario.Id);
             int resultado = 0;
             string query = "UPDATE dbo.FUNCIONARIO SET Nome = @NovoNome, CPF = @NovoCPF, " +
-                    "Email = @NovoEmail, DataNascimento = @NovaDataNascimento, Senha = @NovaSenha WHERE IdFunc = @Id";
+                           "Email = @NovoEmail, Telefone = @NovoTelefone, DataNascimento = @NovaDataNascimento, Senha = @NovaSenha WHERE IdFunc = @Id";
 
             using (SqlConnection connection = new SqlConnection(stringDeConexao))
             {
                 SqlCommand command = new SqlCommand(query, connection);
                 command.Parameters.AddWithValue("@Id", funcionario.Id);
                 command.Parameters.AddWithValue("@NovoNome", funcionario.Nome);
-                command.Parameters.AddWithValue("@NovoCPF", funcionario.Cpf);
+                command.Parameters.AddWithValue("@NovoCPF", funcionario.Cpf.Replace(".", "").Replace("-", "").Replace(",", ""));
+                command.Parameters.AddWithValue("@NovoTelefone", funcionario.Telefone.Replace("(", "").Replace(")", "").Replace("-", "").Replace(" ", ""));
                 command.Parameters.AddWithValue("@NovoEmail", funcionario.Email);
                 command.Parameters.AddWithValue("@NovaDataNascimento", funcionario.DataNascimento);
                 command.Parameters.AddWithValue("@NovaSenha", funcionario.Senha);
 
                 try
                 {
-                    connection.Open();
-                    resultado = command.ExecuteNonQuery();
+                    await connection.OpenAsync();
+                    resultado = await command.ExecuteNonQueryAsync();
                     Console.WriteLine("Número de linhas afetadas: " + resultado);
                 }
-                catch (SqlException ex) { Console.WriteLine("Erro de SQL: " + ex.Message); }
-
-                catch (Exception ex) { Console.WriteLine("Erro: " + ex.Message); }
-
-                finally
+                catch (SqlException ex)
                 {
-                    connection.Close();
+                    Console.WriteLine("Erro de SQL: " + ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Erro: " + ex.Message);
                 }
             }
             return resultado;
         }
+
 
         public int DeletarFuncionario(int id)
         {

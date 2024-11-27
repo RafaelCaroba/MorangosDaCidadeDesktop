@@ -309,7 +309,7 @@
             this.btnCadastrar.TabIndex = 35;
             this.btnCadastrar.Text = "Cadastre-se";
             this.btnCadastrar.UseVisualStyleBackColor = false;
-            this.btnCadastrar.Click += new System.EventHandler(this.btnCadastrar_Click);
+            this.btnCadastrar.Click += new System.EventHandler(this.btnCadastrar_ClickAsync);
             // 
             // txtDtaDeNascimento
             // 

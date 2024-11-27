@@ -17,8 +17,8 @@ namespace MorangosDaCidade2.repositories
             int resultado = 0;
 
             string query = "INSERT INTO dbo.PRODUTO (Nome, Descricao, Quantidade," +
-                "Disponivel, Valor)" +
-                " VALUES (@Nome, @Descricao, @Quantidade, @Disponivel, @Valor)";
+                "Disponivel, Valor, Imagem)" +
+                " VALUES (@Nome, @Descricao, @Quantidade, @Disponivel, @Valor, @Imagem)";
 
             using (SqlConnection conexao = new SqlConnection(stringDeConexao))
             {
@@ -28,6 +28,7 @@ namespace MorangosDaCidade2.repositories
                 comando.Parameters.AddWithValue("@Quantidade", p.Quantidade);
                 comando.Parameters.AddWithValue("@Disponivel", p.Disponivel);
                 comando.Parameters.AddWithValue("@Valor", p.Valor);
+                comando.Parameters.AddWithValue("@Imagem", p.Imagem);
 
                 try
                 {
@@ -56,7 +57,7 @@ namespace MorangosDaCidade2.repositories
                 try
                 {
                     await connection.OpenAsync();
-                    string query = "SELECT IdProduto, Nome, Descricao, Quantidade, Disponivel, Valor FROM dbo.PRODUTO";
+                    string query = "SELECT IdProduto, Nome, Descricao, Quantidade, Disponivel, Valor, Imagem FROM dbo.PRODUTO";
                     SqlCommand comando = new SqlCommand(query, connection);
                     List<Produto> produtos = new List<Produto>();
                     SqlDataReader reader = await comando.ExecuteReaderAsync();
@@ -69,7 +70,10 @@ namespace MorangosDaCidade2.repositories
                         p.Quantidade = (int)reader["Quantidade"];
                         p.Disponivel = (bool)reader["Disponivel"];
                         p.Valor = (double)reader["Valor"];
-                        
+                        p.Imagem = reader["Imagem"] != DBNull.Value ? (byte[])reader["Imagem"] : null;
+
+                        Console.WriteLine($"Imagem: {(p.Imagem != null ? "Imagem presente" : "Imagem ausente")}");
+
                         produtos.Add(p);
                     }
                     return produtos;
@@ -161,7 +165,7 @@ namespace MorangosDaCidade2.repositories
         {
             int resultado = 0;
             string query = "UPDATE dbo.PRODUTO SET Nome = @NovoNome, Descricao = @NovaDescricao, " +
-                    "Quantidade = @NovaQuantidade, Disponivel = @NovoDisponivel, Valor = @NovoValor WHERE IdProduto = @Id";
+                    "Quantidade = @NovaQuantidade, Disponivel = @NovoDisponivel, Valor = @NovoValor, Imagem = @NovaImagem WHERE IdProduto = @Id";
 
             using (SqlConnection connection = new SqlConnection(stringDeConexao))
             {
@@ -172,6 +176,7 @@ namespace MorangosDaCidade2.repositories
                 command.Parameters.AddWithValue("@NovaQuantidade", produto.Quantidade);
                 command.Parameters.AddWithValue("@NovoDisponivel", produto.Disponivel);
                 command.Parameters.AddWithValue("@NovoValor", produto.Valor);
+                command.Parameters.AddWithValue("@NovaImagem", produto.Imagem);
 
                 try
                 {

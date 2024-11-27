@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MorangosDaCidade2.Entities
 {
-    internal class Produto
+    public class Produto
     {
         public int Id { get; set; }
         public string Nome { get; set; }
@@ -15,6 +15,7 @@ namespace MorangosDaCidade2.Entities
         public bool Disponivel {  get; set; }
         public double Valor {  get; set; }
 
+        public byte[] Imagem { get; set; }
 
         public Produto(int id, string nome, string descricao, int quantidade, bool disponivel, double valor)
         {

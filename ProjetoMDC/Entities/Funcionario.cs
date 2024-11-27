@@ -2,7 +2,7 @@
 using System.Data.SqlTypes;
 namespace MorangosDaCidade.Entities
 {
-    class Funcionario : Usuario
+    public class Funcionario : Usuario
     {
         public Funcionario(string nome, string cpf, string email, string telefone, 
             SqlDateTime dataNascimento, string senha) : 

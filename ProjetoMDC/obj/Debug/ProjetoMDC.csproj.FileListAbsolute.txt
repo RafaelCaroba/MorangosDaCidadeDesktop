@@ -28,3 +28,6 @@ C:\Users\Rafael Caroba\Downloads\ProjetoMDC\ProjetoMDC\obj\Debug\ProjetoMDC.cspr
 C:\Users\Rafael Caroba\Downloads\ProjetoMDC\ProjetoMDC\obj\Debug\ProjetoMDC.csproj.CoreCompileInputs.cache
 C:\Users\Rafael Caroba\Downloads\ProjetoMDC\ProjetoMDC\obj\Debug\ProjetoMDC.exe
 C:\Users\Rafael Caroba\Downloads\ProjetoMDC\ProjetoMDC\obj\Debug\ProjetoMDC.pdb
+C:\Users\Rafael Caroba\Downloads\ProjetoMDC\ProjetoMDC\obj\Debug\ProjetoMDC.Views.CadastroProduto.resources
+C:\Users\Rafael Caroba\Downloads\ProjetoMDC\ProjetoMDC\obj\Debug\ProjetoMDC.Views.Funcionarios.resources
+C:\Users\Rafael Caroba\Downloads\ProjetoMDC\ProjetoMDC\obj\Debug\ProjetoMDC.Views.CadastroFuncionario.resources

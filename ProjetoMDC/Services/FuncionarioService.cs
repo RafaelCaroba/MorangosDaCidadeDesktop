@@ -10,19 +10,16 @@ namespace MorangosDaCidade.Service
         public FuncionarioRepository funcionarioRepository = new FuncionarioRepository();
         public FuncionarioService() { }
 
-        public bool SalvarFuncionario(Funcionario f)
+        public async Task<bool> SalvarFuncionarioAsync(Funcionario f)
         {
-            
-            if (funcionarioRepository.CadastrarFuncionario(f) > 0)
-            {
-                return true;
-            }
-            return false;
+            int result = await funcionarioRepository.CadastrarFuncionarioAsync(f);
+            return result > 0;
         }
 
-        public List<Funcionario> ListarFuncionarios()
+
+        public async Task<List<Funcionario>> ListarFuncionariosAsync()
         {
-            List<Funcionario> funcionarios = funcionarioRepository.ListarFuncionarios();
+            List<Funcionario> funcionarios = await funcionarioRepository.ListarFuncionariosAsync();
             return funcionarios;
         }
 
@@ -32,15 +29,16 @@ namespace MorangosDaCidade.Service
             return funcionarios;
         }
 
-        public Funcionario BuscarFuncionarioPorId(int id)
+        public async Task<Funcionario> BuscarFuncionarioPorIdAsync(int id)
         {
-            Funcionario funcionario = funcionarioRepository.BuscarFuncionarioPorId(id);
+            Funcionario funcionario = await funcionarioRepository.BuscarFuncionarioPorIdAsync(id);
             return funcionario;
         }
 
-        public bool AtualizarFuncionario(Funcionario f)
+
+        public async Task<bool> AtualizarFuncionarioAsync(Funcionario f)
         {
-            if (funcionarioRepository.AtualizarFuncionario(f) > 0)
+            if (await funcionarioRepository.AtualizarFuncionarioAsync(f) > 0)
             {
                 return true;
             }

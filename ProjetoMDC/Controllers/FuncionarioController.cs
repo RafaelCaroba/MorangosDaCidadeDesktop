@@ -46,7 +46,7 @@ namespace MorangosDaCidade.Controllers
                         break;
                     case 3:
                         Console.Clear();
-                        EditarFuncionario();
+                        EditarFuncionarioAsync();
                         break;
                     case 4:
                         Console.Clear();
@@ -88,7 +88,7 @@ namespace MorangosDaCidade.Controllers
             return senha.ToString();
         }
 
-        public void CadastrarFuncionario()
+        public async void CadastrarFuncionario()
         {
             ExibirTituloDaOpcao("CADASTRO DE FUNCIONÁRIO");
             Console.Write("Insira o nome do funcionário: ");
@@ -114,7 +114,7 @@ namespace MorangosDaCidade.Controllers
             }
             Funcionario funcionario = new Funcionario(nome, cpf, email, telefone, dtConvertida, senha1);
 
-            if (funcionarioService.SalvarFuncionario(funcionario))
+            if (await funcionarioService.SalvarFuncionarioAsync(funcionario))
             {
                 string dataFormat = funcionario.DataNascimento.ToString().Replace("00:00:00", "");
                 Console.WriteLine("\nSucesso! Novo funcionário Cadastrado:");
@@ -129,10 +129,10 @@ namespace MorangosDaCidade.Controllers
             Console.ReadKey();
         }
 
-        public void ListarFuncionarios()
+        public async void ListarFuncionarios()
         {
             ExibirTituloDaOpcao("LISTA DE FUNCIONÁRIOS");
-            List<Funcionario> funcionarios = funcionarioService.ListarFuncionarios();
+            List<Funcionario> funcionarios = await funcionarioService.ListarFuncionariosAsync();
 
             if (funcionarios.Count > 0) {
                 Console.WriteLine($"{"Id",-5} | {"Nome",-20} | {"e-mail",-30} | {"CPF",-15} | {"Telefone",-15} | {"Data Nasc.",-15}");
@@ -176,7 +176,7 @@ namespace MorangosDaCidade.Controllers
             Console.ReadKey();
         }
 
-        public void EditarFuncionario()
+        public async Task EditarFuncionarioAsync()
         {
             ExibirTituloDaOpcao("EDITAR FUNCIONÁRIO");
             Console.WriteLine("Como prefere buscar o funcionário desejado?");
@@ -206,7 +206,7 @@ namespace MorangosDaCidade.Controllers
 
             Console.Write("\nDigite o Id do funcionário: ");
             int id = int.Parse(Console.ReadLine());
-            Funcionario funcionario = funcionarioService.BuscarFuncionarioPorId(id);
+            Funcionario funcionario = await funcionarioService.BuscarFuncionarioPorIdAsync(id);
             if (funcionario != null)
             {
                 Console.Write("Insira o nome do funcionário: ");
@@ -232,7 +232,7 @@ namespace MorangosDaCidade.Controllers
 
                 funcionario = new Funcionario(id, nomeDigitado, cpf, email, telefone, dtConvertida, senha1);
 
-                if (funcionarioService.AtualizarFuncionario(funcionario))
+                if (await funcionarioService.AtualizarFuncionarioAsync(funcionario))
                 {
                     string dataFormat = funcionario.DataNascimento.ToString().Replace("00:00:00", "");
                     Console.WriteLine("\nSucesso! Novo funcionário Cadastrado:");
@@ -252,7 +252,7 @@ namespace MorangosDaCidade.Controllers
             }
         }
 
-        public void DeletarFuncionario()
+        public async void DeletarFuncionario()
         {
             ExibirTituloDaOpcao("DELETAR USUÁRIO");
             Console.WriteLine("Como prefere buscar o funcionário desejado?");
@@ -282,7 +282,7 @@ namespace MorangosDaCidade.Controllers
 
             Console.Write("\nDigite o Id do funcionário: ");
             int id = int.Parse(Console.ReadLine());
-            Funcionario funcionario = funcionarioService.BuscarFuncionarioPorId(id);
+            Funcionario funcionario = await funcionarioService.BuscarFuncionarioPorIdAsync(id);
             if (funcionario != null)
             {
                 if (funcionarioService.DeletarFuncionario(id))

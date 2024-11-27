@@ -60,7 +60,7 @@ namespace ProjetoMDC.Views
             this.Hide();
         }
 
-        private void btnCadastrar_Click(object sender, EventArgs e)
+        private async void btnCadastrar_ClickAsync(object sender, EventArgs e)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace ProjetoMDC.Views
                 };
 
                 FuncionarioService funcionarioService = new FuncionarioService();
-                funcionarioService.SalvarFuncionario(funcionario);
+                await funcionarioService.SalvarFuncionarioAsync(funcionario);
                 MessageBox.Show("Funcionário cadastrado com sucesso!");
 
                 Gerenciamento gerenciamento = new Gerenciamento();

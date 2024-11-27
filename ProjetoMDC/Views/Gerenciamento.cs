@@ -2,14 +2,20 @@
 using MorangosDaCidade2.services;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrayNotify;
 
 namespace ProjetoMDC.Views
 {
     public partial class Gerenciamento : Form
     {
+        ProdutoService produtoService = new ProdutoService();
+
         public Gerenciamento()
         {
             InitializeComponent();
@@ -23,29 +29,43 @@ namespace ProjetoMDC.Views
 
         private async Task CarregarProdutosAsync()
         {
-            ProdutoService produtoService = new ProdutoService();
-            List<Produto> produtos = await produtoService.ListarProdutosAsync();
+            var produtos = await produtoService.ListarProdutosAsync();
 
-            // Exibe apenas os 4 primeiros produtos
-            produtos = produtos.Take(4).ToList();
 
-            if (produtos.Count > 0)
+            if (produtos != null)
             {
-                label1.Text = produtos[0].Nome;
-               // label6.Text = "Quant. no estoque: " + produtos[0].Quantidade;
-                label11.Text = produtos[0].Quantidade.ToString();
+                DataTable dataTable = new DataTable();
+                dataTable.Columns.Add("IdProduto", typeof(int));
+                dataTable.Columns.Add("Nome", typeof(String));
+                dataTable.Columns.Add("Descricao", typeof(String));
+                dataTable.Columns.Add("Quantidade", typeof(int));
+                dataTable.Columns.Add("Disponivel", typeof(bool));
+                dataTable.Columns.Add("Valor", typeof(double));
+                dataTable.Columns.Add("Imagem", typeof(byte[]));
 
-                label2.Text = produtos.Count > 1 ? produtos[1].Nome : "";
-               // label7.Text = produtos.Count > 1 ? "Quant. no estoque: " + produtos[1].Quantidade : "";
-                label12.Text = produtos.Count > 1 ? produtos[1].Quantidade.ToString() : "";
+                foreach (var produto in produtos)
+                {
+                    DataRow row = dataTable.NewRow(); 
+                    row["IdProduto"] = produto.Id; 
+                    row["Nome"] = produto.Nome; 
+                    row["Descricao"] = produto.Descricao; 
+                    row["Quantidade"] = produto.Quantidade; 
+                    row["Disponivel"] = produto.Disponivel; 
+                    row["Valor"] = produto.Valor; 
+                    row["Imagem"] = produto.Imagem; 
+                    dataTable.Rows.Add(row);
+                }
 
-                label4.Text = produtos.Count > 2 ? produtos[2].Nome : "";
-               // label8.Text = produtos.Count > 2 ? "Quant. no estoque: " + produtos[2].Quantidade : "";
-                label13.Text = produtos.Count > 2 ? produtos[2].Quantidade.ToString() : "";
+                dgvProdutos.DataSource = dataTable;
 
-                label5.Text = produtos.Count > 3 ? produtos[3].Nome : "";
-               // label9.Text = produtos.Count > 3 ? "Quant. no estoque: " + produtos[3].Quantidade : "";
-                label26.Text = produtos.Count > 3 ? produtos[3].Quantidade.ToString() : "";
+                foreach  (DataGridViewRow row in dgvProdutos.Rows)
+                {
+                    if (row.Cells["Imagem"].Value != DBNull.Value)
+                    {
+                        byte[] imageBytes = row.Cells["Imagem"].Value as byte[];
+                        row.Cells["Imagem"].Value = ByteArrayToImage(imageBytes);
+                    }
+                }
             }
             else
             {
@@ -53,93 +73,66 @@ namespace ProjetoMDC.Views
             }
         }
 
-        private async void btnEnviar_Click(object sender, EventArgs e)
+        private Image ByteArrayToImage(byte[] byteArray)
         {
+            if (byteArray == null || byteArray.Length == 0)
+            {
+                return Properties.Resources.strawberry_berry_levitating_white_background;
+            }
+
             try
             {
-                // Atualizar Quantidade
-                await AtualizarQuantidadeAsync(label1.Text, int.Parse(textBox1.Text));
-                await AtualizarQuantidadeAsync(label1.Text, -int.Parse(textBox5.Text));
-                await AtualizarQuantidadeAsync(label2.Text, int.Parse(textBox2.Text));
-                await AtualizarQuantidadeAsync(label2.Text, -int.Parse(textBox6.Text));
-                await AtualizarQuantidadeAsync(label4.Text, int.Parse(textBox3.Text));
-                await AtualizarQuantidadeAsync(label4.Text, -int.Parse(textBox7.Text));
-                await AtualizarQuantidadeAsync(label5.Text, int.Parse(textBox4.Text));
-                await AtualizarQuantidadeAsync(label5.Text, -int.Parse(textBox8.Text));
-
-                // Atualizar Nome
-                await AtualizarNomeAsync(label1.Text, textBox12.Text);
-                await AtualizarNomeAsync(label2.Text, textBox11.Text);
-                await AtualizarNomeAsync(label4.Text, textBox10.Text);
-                await AtualizarNomeAsync(label5.Text, textBox9.Text);
-
-                textBox1.Clear();
-                textBox2.Clear();
-                textBox3.Clear();
-                textBox4.Clear();
-                textBox5.Clear();
-                textBox6.Clear();
-                textBox7.Clear();
-                textBox8.Clear();
-                textBox9.Clear();
-                textBox10.Clear();
-                textBox11.Clear();
-                textBox12.Clear();
-
-                MessageBox.Show("Atualizações realizadas com sucesso!");
-            }
-            catch (Exception ex)
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    return Image.FromStream(ms);
+                }
+            } catch (ArgumentException ex)
             {
-                MessageBox.Show($"Erro ao realizar atualizações: {ex.Message}");
+                Console.WriteLine("Erro ao converter byte array para imagem: " + ex.Message); 
+                return Properties.Resources.strawberry_berry_levitating_white_background;
+            }
+            
+        }
+        private async void btAdicionarProd_Click(object sender, EventArgs e)
+        {
+            CadastroProduto form = new CadastroProduto();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                await produtoService.SalvarProdutoAsync(form.Produto); 
+                await CarregarProdutosAsync();
+            }
+
+        }
+
+        private async void btEditarProd_Click(object sender, EventArgs e)
+        {
+            int selectedRow = dgvProdutos.SelectedRows[0].Index;
+            int productId = (int)dgvProdutos.Rows[selectedRow].Cells["IdProduto"].Value;
+
+            Produto produto = await produtoService.BuscarProdutoPorIdAsync(productId);
+            CadastroProduto form = new CadastroProduto(produto);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                await produtoService.AtualizarProdutoAsync(form.Produto);
+                await CarregarProdutosAsync();
             }
         }
 
-        private async Task AtualizarQuantidadeAsync(string nomeProduto, int quantidade)
+        private async void btExcluirProd_Click(object sender, EventArgs e)
         {
-            ProdutoService produtoService = new ProdutoService();
-            Produto produto = (await produtoService.ListarProdutosPorNomeAsync(nomeProduto)).FirstOrDefault();
+            
+            int selectedRow = dgvProdutos.SelectedRows[0].Index;
+            int productId = (int)dgvProdutos.Rows[selectedRow].Cells["IdProduto"].Value;
+            Console.WriteLine($"ID SELECIONADO: {IdProduto}");
 
-            if (produto != null)
+            Produto produto = await produtoService.BuscarProdutoPorIdAsync(productId);
+            DialogResult dialogResult = MessageBox.Show("Tem certeza que deseja excluir?", "Confirmação" , 
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if(dialogResult == DialogResult.Yes)
             {
-                produto.Quantidade += quantidade;
-                if (produto.Quantidade < 0) produto.Quantidade = 0;
+                await produtoService.DeletarProdutoAsync(productId);
+                await CarregarProdutosAsync();
 
-                if (await produtoService.AtualizarProdutoAsync(produto))
-                {
-                    await CarregarProdutosAsync();
-                }
-                else
-                {
-                    MessageBox.Show("Erro ao atualizar a quantidade do produto.");
-                }
-            }
-            else
-            {
-                MessageBox.Show("Produto não encontrado.");
-            }
-        }
-
-        private async Task AtualizarNomeAsync(string nomeProdutoAntigo, string nomeProdutoNovo)
-        {
-            ProdutoService produtoService = new ProdutoService();
-            Produto produto = (await produtoService.ListarProdutosPorNomeAsync(nomeProdutoAntigo)).FirstOrDefault();
-
-            if (produto != null)
-            {
-                produto.Nome = nomeProdutoNovo;
-
-                if (await produtoService.AtualizarProdutoAsync(produto))
-                {
-                    await CarregarProdutosAsync();
-                }
-                else
-                {
-                    MessageBox.Show("Erro ao atualizar o nome do produto.");
-                }
-            }
-            else
-            {
-                MessageBox.Show("Produto não encontrado.");
             }
         }
 
@@ -199,6 +192,38 @@ namespace ProjetoMDC.Views
 
         private void label28_Click(object sender, EventArgs e)
         {
+        }
+
+        private void Gerenciamento_Load_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void panel2_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void dgvProdutos_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void BtProdutos_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void BtFuncionarios_Click(object sender, EventArgs e)
+        {
+            Funcionarios funcionarios = new Funcionarios();
+            funcionarios.Show();
+            this.Hide();
         }
     }
 }
